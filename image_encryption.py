@@ -32,6 +32,8 @@ for i in range(width):
 
             # UNCOMMENT THIS 
             #after_encryption_pixel_value += resulting_bit*(2**k)
+            
+    pixel_map[i,j] = int(after_encryption_pixel_value)
   
 # Saving the final output 
 input_image.save("encrypted", format="tiff") 
