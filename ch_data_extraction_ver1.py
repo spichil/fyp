@@ -80,4 +80,4 @@ def data_extraction(input_image, block_size):
     
 
 key = b'pzkUHwYaLVLml0hh'
-#decrypt_image("encrypted_image2.tiff", "decrypted_image.tiff", key)
+decrypt_image("embedded_image.tiff", "decrypted_image2.tiff", key)
