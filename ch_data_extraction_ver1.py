@@ -2,6 +2,7 @@ from PIL import Image
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
 from image_encryption2 import aesCTR
+import random
 
 def decrypt_image(input_image_path, output_image_path, key):
     '''
@@ -56,28 +57,106 @@ def decrypt_image(input_image_path, output_image_path, key):
     # Show encrypted version of image
     decrypted_image.show()
 
-def data_extraction(input_image, block_size):
-    pass
-    width, height = input_image.size 
-    number_of_blocks = int(width/block_size)*int(height/block_size)
-    hori_blocks = int(width/block_size)
-    verti_blocks = int(height/block_size)
-
-    # going through each block
-    for i in range(hori_blocks):
-        for j in range(verti_blocks):
-            # for each block, go through pixels and flip three LSB
-            for x in range(block_size):
-                for y in range(block_size):
-                    pixel_value = input_image.getpixel((i*block_size+x, j*block_size+y))
-                    for k in range(3):
-                        # Bit extraction using division and modulo
-                        bit = (pixel_value // (2 ** k)) % 2
-
-                        flipped_bit = abs(bit-1)
-                        # code onwards would need the data-hiding key from data embedding 
-    pass
+def data_extraction(image_path, output_path, block_size, data_hiding_key):
+    """
+    data_extraction function to be executed after image decryption.
+    Step-by-step of how the function works is as follows:
+        1. Create 2 copies of the decrypted image.
+        2. Segment the encrypted image into blocks.
+        3. Pseudo-randomly decide whether each pixel within a block is in Set A or B.
+        4. Execute bit flipping for both sets, one on each copied image.
+        5. Use spatial correlation fluctuation calculation, calculating the fluctuation for both outcomes.
+        6. Block with lower fluctuation is taken as original, and the embedded bit is extracted.
+        7. Steps 3-6 are repeated for every block within the image.
+    """
+    embedded_bit = ""
+    # Load the encrypted image
+    image = Image.open(image_path).convert('L')
+    pixel_map = image.load()
+    width, height = image.size
     
+    # Convert secret data to binary
+    #binary_data = ''.join(format(byte, '08b') for byte in bytearray(secret_data, encoding='utf-8'))
 
+    # Initialize random seed for reproducibility
+    random.seed(data_hiding_key)
+
+    # copy input image twice for spatial correlation comparison
+    h0_image = image.copy(image)
+    h0_pixelmap = h0_image.load()
+    h1_image = image.copy(image)
+    h1_pixelmap = h1_image.load()
+
+    # Segmentation of encrypted image into non-overlapping blocks
+    for i in range(0, width, block_size):
+        for j in range(0, height, block_size):
+            # if index < len(binary_data):
+            #     # Each block will be used to carry one additional bit
+            block_pixels = []
+            for m in range(block_size):
+                for n in range(block_size):
+                    if i + m < width and j + n < height:
+                        block_pixels.append((i + m, j + n))
+                
+            # Pseudo-randomly divide pixels into two sets (Set A and Set B)
+            set_A = []
+            set_B = []
+            for pixel in block_pixels:
+                if random.random() < 0.5:
+                    set_A.append(pixel)
+                else:
+                    set_B.append(pixel)
+            
+            # for every block, flip LSB of pixels in Set A, then replace the pixels in h0
+            for pixel in set_A:
+                pixel_value = pixel_map[pixel]
+                pixel_bin = format(pixel_value, '08b')
+                new_pixel_bin = pixel_bin[:-3] + ''.join(['1' if b == '0' else '0' for b in pixel_bin[-3:]])
+                h0_pixelmap[pixel] = int(new_pixel_bin, 2)
+
+            # for every block, flip LSB of pixels in Set B, then replace the pixels in h1
+            for pixel in set_B:
+                pixel_value = pixel_map[pixel]
+                pixel_bin = format(pixel_value, '08b')
+                new_pixel_bin = pixel_bin[:-3] + ''.join(['1' if b == '0' else '0' for b in pixel_bin[-3:]])
+                h1_pixelmap[pixel] = int(new_pixel_bin, 2)
+
+            # compare spatial correlation to determine most correct block
+            h0_fluc = fluctuation_calculation(h0_image,block_size=block_size,i=i,j=j)
+            h1_fluc = fluctuation_calculation(h1_image,block_size=block_size,i=i,j=j)
+
+            # compare fluctuations of both blocks, lower fluctuation = closer to original = considered as original 
+            # embedded bit will be 0 if h0_fluc is lower, 1 if h1_fluc is lower
+            if h0_fluc < h1_fluc:
+                for pixel in set_A:
+                    pixel_value = pixel_map[pixel]
+                    pixel_bin = format(pixel_value, '08b')
+                    new_pixel_bin = pixel_bin[:-3] + ''.join(['1' if b == '0' else '0' for b in pixel_bin[-3:]])
+                    pixel_map[pixel] = int(new_pixel_bin, 2)
+                embedded_bit = embedded_bit + "0"
+            else:
+                for pixel in set_B:
+                    pixel_value = pixel_map[pixel]
+                    pixel_bin = format(pixel_value, '08b')
+                    new_pixel_bin = pixel_bin[:-3] + ''.join(['1' if b == '0' else '0' for b in pixel_bin[-3:]])
+                    pixel_map[pixel] = int(new_pixel_bin, 2)
+                embedded_bit = embedded_bit + "1"
+
+
+    # Save the image with embedded data
+    image.save(output_path)
+    image.show()
+
+def fluctuation_calculation(input_image:Image, block_size, i, j):
+    fluctuation = 0
+    pixel_map = input_image.load()
+    for u in range(2,block_size-1):
+        for v in range(2,block_size-1):
+            fluctuation += abs(pixel_map[i+u,j+v]-((pixel_map[i+u-1,j+v]+pixel_map[i+u,j+v-1]+pixel_map[i+u+1,j+v]+pixel_map[i+u,j+v+1])/4))
+    
+    return fluctuation
+    
+    
+data_hiding_key = 1234
 key = b'pzkUHwYaLVLml0hh'
 decrypt_image("embedded_image.tiff", "decrypted_image2.tiff", key)
