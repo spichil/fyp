@@ -1,7 +1,7 @@
 import random
 from PIL import Image
 
-def data_embedding_paper(image_path, secret_data, output_path, block_size=8, data_hiding_key=1234):
+def data_embedding_paper(image_path, secret_data, output_path, block_size, data_hiding_key=1234):
     # Load the encrypted image
     image = Image.open(image_path).convert('L')
     pixel_map = image.load()
@@ -58,4 +58,4 @@ def data_embedding_paper(image_path, secret_data, output_path, block_size=8, dat
     
 
 # Example usage:
-data_embedding_paper('encrypted_image.tiff', 'This is a secret message', 'embedded_image123.tiff', block_size=8, data_hiding_key=1234)
+data_embedding_paper('encrypted_image.tiff', 'Secret', 'embedded_image123.tiff', block_size=32, data_hiding_key=1234)

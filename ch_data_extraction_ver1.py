@@ -57,7 +57,7 @@ def decrypt_image(input_image_path, output_image_path, key):
     # Show encrypted version of image
     decrypted_image.show()
 
-def data_extraction(image_path, output_path, block_size, data_hiding_key):
+def data_extraction(image_path, output_path, block_size, data_hiding_key, message_length):
     """
     data_extraction function to be executed after image decryption.
     Step-by-step of how the function works is as follows:
@@ -69,8 +69,8 @@ def data_extraction(image_path, output_path, block_size, data_hiding_key):
         6. Block with lower fluctuation is taken as original, and the embedded bit is extracted.
         7. Steps 3-6 are repeated for every block within the image.
     """
-    embedded_bit = ""
-    # Load the encrypted image
+    embedded_bits = ""
+    # Load the decrypted image
     image = Image.open(image_path).convert('L')
     pixel_map = image.load()
     width, height = image.size
@@ -82,9 +82,9 @@ def data_extraction(image_path, output_path, block_size, data_hiding_key):
     random.seed(data_hiding_key)
 
     # copy input image twice for spatial correlation comparison
-    h0_image = image.copy(image)
+    h0_image = image.copy()
     h0_pixelmap = h0_image.load()
-    h1_image = image.copy(image)
+    h1_image = image.copy()
     h1_pixelmap = h1_image.load()
 
     # Segmentation of encrypted image into non-overlapping blocks
@@ -133,19 +133,27 @@ def data_extraction(image_path, output_path, block_size, data_hiding_key):
                     pixel_bin = format(pixel_value, '08b')
                     new_pixel_bin = pixel_bin[:-3] + ''.join(['1' if b == '0' else '0' for b in pixel_bin[-3:]])
                     pixel_map[pixel] = int(new_pixel_bin, 2)
-                embedded_bit = embedded_bit + "0"
+                embedded_bits = embedded_bits + "0"
             else:
                 for pixel in set_B:
                     pixel_value = pixel_map[pixel]
                     pixel_bin = format(pixel_value, '08b')
                     new_pixel_bin = pixel_bin[:-3] + ''.join(['1' if b == '0' else '0' for b in pixel_bin[-3:]])
                     pixel_map[pixel] = int(new_pixel_bin, 2)
-                embedded_bit = embedded_bit + "1"
+                embedded_bits = embedded_bits + "1"
+
+    returned_data = decode_binary_string(embedded_bits)
 
 
     # Save the image with embedded data
     image.save(output_path)
     image.show()
+
+    return returned_data
+        
+def decode_binary_string(s):
+    return ''.join(chr(int(s[i*8:i*8+8],2)) for i in range(len(s)//8))
+
 
 def fluctuation_calculation(input_image:Image, block_size, i, j):
     fluctuation = 0
@@ -159,4 +167,6 @@ def fluctuation_calculation(input_image:Image, block_size, i, j):
     
 data_hiding_key = 1234
 key = b'pzkUHwYaLVLml0hh'
-decrypt_image("embedded_image.tiff", "decrypted_image2.tiff", key)
+decrypt_image("embedded_image123.tiff", "decrypted_image2.tiff", key)
+print(data_extraction("decrypted_image2.tiff", "recovered_image.tiff", block_size=32, data_hiding_key=data_hiding_key))
+
