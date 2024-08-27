@@ -81,64 +81,48 @@ conditions = ['Condition 1']  # Describe the condition (e.g., "No noise", "With 
 # plt.show()
 
 
-def data_extraction_and_calculate_ber(image_path, block_size, data_hiding_key=1234):
-    image = Image.open(image_path).convert('L')
-    pixel_map = image.load()
-    width, height = image.size
 
-    # Initialize random seed for reproducibility
-    random.seed(data_hiding_key)
+from ch_data_extraction_ver1 import decrypt_image, data_extraction, calculate_ber, plot_ber_vs_block_size
+from data_embedding import data_embedding_paper
+def run_experiment(image_path, output_path, secret_data, key, block_sizes, data_hiding_key=1234):
+    ber_values = []
     
-    total_blocks = 0
-    incorrect_blocks = 0
+    for block_size in block_sizes:
+        print(f"Running for block size: {block_size}")
+        output_image_path = f"embedded_image_block_{block_size}.tiff"
+        decrypted_image_path = f"decrypted_image_block_{block_size}.tiff"
+        
+        # Embed the data
+        data_embedding_paper(image_path, secret_data, output_image_path, block_size, data_hiding_key)
+        
+        # Decrypt the image
+        decrypt_image(output_image_path, decrypted_image_path, key)
+        
+        # Extract the data
+        extracted_bits = data_extraction(decrypted_image_path,output_path, block_size, data_hiding_key)
+        
+        # Convert the original secret data to binary for comparison
+        original_bits = ''.join(format(byte, '08b') for byte in bytearray(secret_data, encoding='utf-8'))
+        
+        # Calculate BER
+        ber = calculate_ber(extracted_bits, original_bits)
+        ber_values.append(ber)
+        print(f"BER for block size {block_size}: {ber}")
 
-    for i in range(0, width, block_size):
-        for j in range(0, height, block_size):
-            block_pixels = []
-            for m in range(block_size):
-                for n in range(block_size):
-                    if i + m < width and j + n < height:
-                        block_pixels.append((i + m, j + n))
-            
-            # Pseudo-randomly divide pixels into two sets (Set A and Set B)
-            set_A = []
-            set_B = []
-            for pixel in block_pixels:
-                if random.random() < 0.5:
-                    set_A.append(pixel)
-                else:
-                    set_B.append(pixel)
+    return block_sizes, ber_values
 
-            # Assume the actual embedded bit is known
-            embedded_bit = random.choice(['0', '1'])
-
-            # Simulate the extraction process
-            # Here, we would compare the original block with extracted block to detect errors
-            # For simplicity, we'll assume some random incorrect extractions based on block size
-            if block_size <= 16 and random.random() < 0.1:
-                incorrect_blocks += 1
-            elif block_size > 16 and random.random() < 0.05:
-                incorrect_blocks += 1
-
-            total_blocks += 1
+# Run the experiment and plot the results
+if __name__ == "__main__":
+    block_sizes = [8, 16, 32, 64]  # Different block sizes to test
+    data_hiding_key = 1234
+    key = b'pzkUHwYaLVLml0hh'
+    image_path = 'encrypted_image.tiff'
+    secret_data = 'Secret'
+    output_path = 'recovered_image.tiff'
     
-    ber = incorrect_blocks / total_blocks
-    return ber
+    # Run the experiment
+    block_sizes, ber_values = run_experiment(image_path, output_path, secret_data, key, block_sizes, data_hiding_key)
+    print(data_extraction(image_path, output_path, block_size=32, data_hiding_key=data_hiding_key))
 
-# Example block sizes to test
-block_sizes = [8, 16, 24, 32, 40]
-ber_values = []
-
-# Calculate BER for different block sizes
-for block_size in block_sizes:
-    ber = data_extraction_and_calculate_ber('decrypted_image2.tiff', block_size)
-    ber_values.append(ber*100)
-
-# Plotting the BER with respect to block sizes
-plt.figure(figsize=(10, 6))
-plt.plot(block_sizes, ber_values, marker='o')
-plt.title('Extracted-bit Error Rate with Respect to Block Sizes')
-plt.xlabel('Block Size (s)')
-plt.ylabel('Extracted-bit Error Rate (%)')
-plt.grid(True)
-plt.show()
+    # Plot the results
+    plot_ber_vs_block_size(block_sizes, ber_values)
