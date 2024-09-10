@@ -3,6 +3,7 @@ from Crypto.Cipher import AES
 from Crypto.Util import Counter
 from image_encryption2 import aesCTR
 import random
+import matplotlib.pyplot as plt
 
 def decrypt_image(input_image_path, output_image_path, key):
     '''
@@ -150,6 +151,7 @@ def data_extraction(image_path, output_path, block_size, data_hiding_key):
     image.show()
 
     return returned_data
+    
         
 def decode_binary_string(s):
     return ''.join(chr(int(s[i*8:i*8+8],2)) for i in range(len(s)//8))
@@ -164,6 +166,18 @@ def fluctuation_calculation(input_image:Image, block_size, i, j):
     
     return fluctuation
     
+def calculate_ber(extracted_bits, original_bits):
+    errors = sum(e != o for e, o in zip(extracted_bits, original_bits))
+    return errors / len(original_bits)
+
+def plot_ber_vs_block_size(block_sizes, ber_values):
+    plt.figure(figsize=(10, 6))
+    plt.plot(block_sizes, ber_values, marker='o')
+    plt.title('Extracted-Bit Error Rate with Respect to Block Sizes')
+    plt.xlabel('Block Size')
+    plt.ylabel('Bit Error Rate (BER)')
+    plt.grid(True)
+    plt.show()
     
 data_hiding_key = 1234
 key = b'pzkUHwYaLVLml0hh'
