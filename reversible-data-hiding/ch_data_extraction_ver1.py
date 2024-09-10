@@ -57,7 +57,7 @@ def decrypt_image(input_image_path, output_image_path, key):
     # Show encrypted version of image
     decrypted_image.show()
 
-def data_extraction(image_path, output_path, block_size, data_hiding_key, message_length):
+def data_extraction(image_path, output_path, block_size, data_hiding_key):
     """
     data_extraction function to be executed after image decryption.
     Step-by-step of how the function works is as follows:
