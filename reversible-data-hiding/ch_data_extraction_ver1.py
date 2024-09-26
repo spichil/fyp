@@ -56,7 +56,7 @@ def decrypt_image(input_image_path, output_image_path, key):
     decrypted_image.save(output_image_path, format="tiff")
     
     # Show encrypted version of image
-    decrypted_image.show()
+    # decrypted_image.show()
 
 def data_extraction(image_path, output_path, block_size, data_hiding_key):
     """
@@ -148,7 +148,7 @@ def data_extraction(image_path, output_path, block_size, data_hiding_key):
 
     # Save the image with embedded data
     image.save(output_path)
-    image.show()
+    # image.show()
 
     return returned_data
     
@@ -179,8 +179,8 @@ def plot_ber_vs_block_size(block_sizes, ber_values):
     plt.grid(True)
     plt.show()
     
-data_hiding_key = 1234
-key = b'pzkUHwYaLVLml0hh'
-decrypt_image("embedded_image123.tiff", "decrypted_image2.tiff", key)
-print(data_extraction("decrypted_image2.tiff", "recovered_image.tiff", block_size=32, data_hiding_key=data_hiding_key))
+# data_hiding_key = 1234
+# key = b'pzkUHwYaLVLml0hh'
+# decrypt_image("embedded_image123.tiff", "decrypted_image2.tiff", key)
+# print(data_extraction("decrypted_image2.tiff", "recovered_image.tiff", block_size=32, data_hiding_key=data_hiding_key))
 

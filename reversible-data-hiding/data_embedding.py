@@ -54,8 +54,18 @@ def data_embedding_paper(image_path, secret_data, output_path, block_size, data_
 
     # Save the image with embedded data
     image.save(output_path)
-    image.show()
+    # image.show()
     
 
-# Example usage:
-data_embedding_paper('encrypted_image.tiff', 'Secret', 'embedded_image123.tiff', block_size=32, data_hiding_key=1234)
+# # List of encrypted images to embed data into
+# encrypted_images = ["encrypted_lena.tiff", "encrypted_lake.tiff", "encrypted_man.tiff", "encrypted_baboon.tiff"]
+
+# # Secret data to embed
+# secret_data = "Secret"
+
+# # Loop through each encrypted image, embed the data, and save the result
+# for encrypted_image in encrypted_images:
+#     output_image_path = f"embedded_{encrypted_image}"
+#     print(f"Embedding data into {encrypted_image}...")
+#     data_embedding_paper(encrypted_image, secret_data, output_image_path, block_size=32, data_hiding_key=1234)
+#     print(f"Saved embedded image as {output_image_path}")
