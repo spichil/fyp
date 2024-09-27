@@ -82,7 +82,7 @@ def calculate_ber(original_image_path, decrypted_image_path):
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
-from image_encryption2 import encrypt_image  # Assuming encryption function is in image_encryption2
+from image_encryption import encrypt_image  # Assuming encryption function is in image_encryption2
 from data_embedding import data_embedding_paper
 from ch_data_extraction_ver1 import decrypt_image, data_extraction, calculate_ber, plot_ber_vs_block_size
 

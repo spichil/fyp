@@ -1,7 +1,7 @@
 from PIL import Image
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
-from image_encryption2 import aesCTR
+from image_encryption import aesCTR
 import random
 import matplotlib.pyplot as plt
 
