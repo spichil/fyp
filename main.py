@@ -22,7 +22,7 @@ class App(ctk.CTk):
 
         # Run
         self.mainloop()
-
+            
     def import_image(self, path):
         self.image = Image.open(path)
         self.image_tk = ImageTk.PhotoImage(self.image)
