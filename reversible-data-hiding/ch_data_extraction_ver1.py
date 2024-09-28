@@ -1,7 +1,7 @@
 from PIL import Image
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
-from image_encryption2 import aesCTR
+from image_encryption import aesCTR
 import random
 import matplotlib.pyplot as plt
 
@@ -70,6 +70,7 @@ def data_extraction(image_path, output_path, block_size, data_hiding_key):
         6. Block with lower fluctuation is taken as original, and the embedded bit is extracted.
         7. Steps 3-6 are repeated for every block within the image.
     """
+    returned_data = ""
     embedded_bits = ""
     # Load the decrypted image
     image = Image.open(image_path).convert('L')
@@ -143,7 +144,22 @@ def data_extraction(image_path, output_path, block_size, data_hiding_key):
                     pixel_map[pixel] = int(new_pixel_bin, 2)
                 embedded_bits = embedded_bits + "1"
 
-    returned_data = decode_binary_string(embedded_bits)
+    decoded_embedded_message = decode_binary_string(embedded_bits)
+
+    counter = 0
+    message = ""
+    for character in decoded_embedded_message:
+        message += character
+        if counter == 3:
+            returned_data = message[:-3]
+            break
+
+
+        if character == '*':
+            counter += 1
+        else:
+            counter = 0
+        
 
 
     # Save the image with embedded data

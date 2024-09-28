@@ -3,6 +3,7 @@ from PIL import Image
 
 def data_embedding_paper(image_path, secret_data, output_path, block_size, data_hiding_key=1234):
     # Load the encrypted image
+    secret_data = secret_data + "***"
     image = Image.open(image_path).convert('L')
     pixel_map = image.load()
     width, height = image.size
@@ -54,18 +55,8 @@ def data_embedding_paper(image_path, secret_data, output_path, block_size, data_
 
     # Save the image with embedded data
     image.save(output_path)
-    # image.show()
+    image.show()
     
 
-# # List of encrypted images to embed data into
-# encrypted_images = ["encrypted_lena.tiff", "encrypted_lake.tiff", "encrypted_man.tiff", "encrypted_baboon.tiff"]
-
-# # Secret data to embed
-# secret_data = "Secret"
-
-# # Loop through each encrypted image, embed the data, and save the result
-# for encrypted_image in encrypted_images:
-#     output_image_path = f"embedded_{encrypted_image}"
-#     print(f"Embedding data into {encrypted_image}...")
-#     data_embedding_paper(encrypted_image, secret_data, output_image_path, block_size=32, data_hiding_key=1234)
-#     print(f"Saved embedded image as {output_image_path}")
+# Example usage:
+data_embedding_paper('encrypted_image.tiff', 'Secret', 'embedded_image123.tiff', block_size=32, data_hiding_key=1234)
