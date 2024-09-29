@@ -135,7 +135,7 @@ if __name__ == "__main__":
     block_sizes = [4, 8, 16, 32, 64]  # Different block sizes to test
     data_hiding_key = 1234
     key = b'pzkUHwYaLVLml0hh'
-    secret_data = 'Secret'
+    secret_data = 'SecretSe'
     output_path = 'recovered_image.tiff'
     
     # Image paths

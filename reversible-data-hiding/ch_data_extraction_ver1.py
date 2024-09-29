@@ -14,7 +14,7 @@ def decrypt_image(input_image_path, output_image_path, key):
         raise ValueError("Key must be 16 bytes (128 bits) long.")
     
     # Import an image from directory
-    input_image = Image.open(input_image_path)
+    input_image = Image.open("reversible-data-hiding\\" + input_image_path)
     
     # Extracting the width and height of the image
     width, height = input_image.size
@@ -53,7 +53,7 @@ def decrypt_image(input_image_path, output_image_path, key):
             pixel_map[i, j] = int(after_decryption_pixel_value)
     
     # Saving the final output
-    decrypted_image.save(output_image_path, format="tiff")
+    decrypted_image.save("reversible-data-hiding\\" + output_image_path, format="tiff")
     
     # Show encrypted version of image
     # decrypted_image.show()
@@ -73,7 +73,7 @@ def data_extraction(image_path, output_path, block_size, data_hiding_key):
     returned_data = ""
     embedded_bits = ""
     # Load the decrypted image
-    image = Image.open(image_path).convert('L')
+    image = Image.open("reversible-data-hiding\\" + image_path).convert('L')
     pixel_map = image.load()
     width, height = image.size
     
@@ -163,7 +163,7 @@ def data_extraction(image_path, output_path, block_size, data_hiding_key):
 
 
     # Save the image with embedded data
-    image.save(output_path)
+    image.save("reversible-data-hiding\\" + output_path)
     # image.show()
 
     return returned_data

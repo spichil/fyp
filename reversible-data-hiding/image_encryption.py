@@ -35,7 +35,7 @@ def encrypt_image(input_image_path, output_image_path, key):
         raise ValueError("Key must be 16 bytes (128 bits) long.")
     
     # Import an image from directory
-    input_image = Image.open(input_image_path)
+    input_image = Image.open("reversible-data-hiding\\" + input_image_path)
     
     # Extracting the width and height of the image
     width, height = input_image.size
@@ -74,7 +74,7 @@ def encrypt_image(input_image_path, output_image_path, key):
             pixel_map[i, j] = int(after_encryption_pixel_value)
     
     # Saving the final output
-    encrypted_image.save(output_image_path, format="tiff")
+    encrypted_image.save("reversible-data-hiding\\" + output_image_path, format="tiff")
     
     # Show encrypted version of image
     # encrypted_image.show()
