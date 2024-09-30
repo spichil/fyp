@@ -1,11 +1,15 @@
 import customtkinter as ctk
 from tkinter import Label
 from PIL import Image, ImageTk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from image_widgets import *  # Assuming this contains your custom widgets
 from menu import *  # Assuming this handles additional UI elements
 from reversible_data_hiding.image_encryption2 import encrypt_image  # Your encryption logic
 from reversible_data_hiding.data_embedding import data_embedding_paper  # Your embedding logic
 from reversible_data_hiding.ch_data_extraction_ver1 import decrypt_image, data_extraction  # Your decryption and extraction logic
+import matplotlib.pyplot as plt
+from reversible_data_hiding.evaluate import run_experiment, calculate_psnr
+
 
 class App(ctk.CTk):
     def __init__(self):
@@ -95,8 +99,54 @@ class App(ctk.CTk):
         self.decrypted_message_label = Label(self, text=f"Extracted Message: {extracted_message}", font=("Helvetica", 12))
         self.decrypted_message_label.grid(row=1, column=1, pady=20)
 
+    def show_statistics(self):
+        """
+        Function to calculate and display the PSNR and BER values
+        """
+        # Use the same image for PSNR/BER calculation
+        block_sizes = [4, 8, 16, 32, 64]
+        data_hiding_key = 1234
+        key = b'pzkUHwYaLVLml0hh'
+        secret_data = 'Secret'
+        output_path = 'recovered_image.tiff'
+
+        # Run the experiment using the user's selected image
+        block_sizes, ber_values = run_experiment(self.image_path, output_path, secret_data, key, block_sizes, data_hiding_key)
+
+        # Calculate PSNR
+        psnr_value = calculate_psnr(self.image_path, "decrypted_image.tiff")
+
+        # Display the PSNR and BER values
+        self.psnr_label = Label(self, text=f"PSNR: {psnr_value:.2f} dB", font=("Helvetica", 12))
+        self.psnr_label.grid(row=2, column=1, pady=10)
+
+        # Display BER for block size 32
+        ber_value = ber_values[block_sizes.index(32)]
+        self.ber_label = Label(self, text=f"BER for block size 32: {ber_value:.2f}%", font=("Helvetica", 12))
+        self.ber_label.grid(row=3, column=1, pady=10)
+
+        # Plot BER graph
+        self.plot_ber_graph(block_sizes, ber_values)
+
+    def plot_ber_graph(self, block_sizes, ber_values):
+        """
+        Plot BER graph and show it in the Statistics tab
+        """
+        fig, ax = plt.subplots()
+        ax.plot(block_sizes, ber_values, marker='o', label='BER')
+
+        ax.set_title('Extracted-Bit Error Rate with Respect to Block Sizes')
+        ax.set_xlabel('Block Size')
+        ax.set_ylabel('Extracted-bit Error Rate (%)')
+        ax.grid(True)
+
+        # Create a canvas for the plot
+        canvas = FigureCanvasTkAgg(fig, master=self)
+        canvas.draw()
+        canvas.get_tk_widget().grid(row=4, column=1, pady=20)
+
 class Menu(ctk.CTkTabview):
-    def __init__(self, parent, submit_watermark_func, submit_decryption_func):
+    def __init__(self, parent, submit_watermark_func, submit_decryption_func, show_statistics_func):
         super().__init__(master=parent)
         self.grid(row=0, column=0, sticky='nsew')
 
@@ -110,6 +160,7 @@ class Menu(ctk.CTkTabview):
         # Add frames
         WatermarkingFrame(self.tab('Watermarking'), submit_watermark_func)
         DecryptionFrame(self.tab('Decryption'), submit_decryption_func)
+        StatisticsFrame(self.tab('Statistics'), show_statistics_func)  # Initialize StatisticsFrame here
 
 class DecryptionFrame(ctk.CTkFrame):
     def __init__(self, parent, submit_decryption_func):
@@ -179,6 +230,18 @@ class WatermarkingFrame(ctk.CTkFrame):
         # Add submit button
         self.submit_button = ctk.CTkButton(self, text="Submit", command=lambda: submit_watermark_func(self.method_var.get(), self.text_input.get()))
         self.submit_button.pack(pady=20)
+
+class StatisticsFrame(ctk.CTkFrame):
+    def __init__(self, parent, show_statistics_func):
+        super().__init__(master=parent)
+        self.pack(expand=True, fill='both')
+
+        # Add PSNR/BER calculation button
+        self.calculate_button = ctk.CTkButton(
+            self, text="Calculate PSNR and BER",
+            command=show_statistics_func
+        )
+        self.calculate_button.pack(pady=20)
 
 
 if __name__ == "__main__":
