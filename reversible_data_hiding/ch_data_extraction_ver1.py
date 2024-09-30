@@ -1,9 +1,28 @@
 from PIL import Image
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
-from image_encryption import aesCTR
+#from image_encryption2 import aesCTR
 import random
 import matplotlib.pyplot as plt
+
+def aesCTR(key, num_bits):
+    # Create a counter object for AES-CTR mode
+    counter = Counter.new(128)
+    
+    # Create a new AES cipher object in CTR mode
+    cipher = AES.new(key, AES.MODE_CTR, counter=counter)
+    
+    # Generate the pseudo-random bits
+    num_bytes = (num_bits + 7) // 8
+    random_bytes = cipher.encrypt(b'\x00' * num_bytes)
+    
+    # Convert bytes to bits
+    random_bits = []
+    for byte in random_bytes:
+        for i in range(8):
+            random_bits.append((byte >> (7 - i)) & 1)
+    
+    return random_bits
 
 def decrypt_image(input_image_path, output_image_path, key):
     '''
