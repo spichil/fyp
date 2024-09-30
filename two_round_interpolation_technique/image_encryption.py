@@ -78,5 +78,5 @@ def encrypt_image(input_image_path, output_image_path, key):
     # Show encrypted version of image
     encrypted_image.show()
 
-key = b'pzkUHwYaLVLml0hh' 
-encrypt_image("7.1.07.tiff", "encrypted_image2.tiff", key)
+# key = b'pzkUHwYaLVLml0hh' 
+# encrypt_image("7.1.07.tiff", "encrypted_image2.tiff", key)

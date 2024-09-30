@@ -1,15 +1,14 @@
 import customtkinter as ctk
 from tkinter import Label
 from PIL import Image, ImageTk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
 from image_widgets import *  # Assuming this contains your custom widgets
 from menu import *  # Assuming this handles additional UI elements
 from reversible_data_hiding.image_encryption2 import encrypt_image  # Your encryption logic
 from reversible_data_hiding.data_embedding import data_embedding_paper  # Your embedding logic
 from reversible_data_hiding.ch_data_extraction_ver1 import decrypt_image, data_extraction  # Your decryption and extraction logic
-import matplotlib.pyplot as plt
-from reversible_data_hiding.evaluate import run_experiment, calculate_psnr
-
+from reversible_data_hiding.evaluate import calculate_psnr, plot_multiple_ber, run_experiment
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class App(ctk.CTk):
     def __init__(self):
@@ -27,9 +26,12 @@ class App(ctk.CTk):
         # Widget to import the image
         self.image_import = ImageImport(self, self.import_image)
 
+        # Statistics frame placeholder
+        self.statistics_frame = None
+
         # Run
         self.mainloop()
-            
+
     def import_image(self, path):
         self.image_path = path  # Store image path
         self.image = Image.open(path)
@@ -43,7 +45,7 @@ class App(ctk.CTk):
 
         # Menu for settings
         self.menu = Menu(self, self.submit_watermark, self.submit_decryption)  # Pass watermarking and decryption functions
-    
+
     def close_edit(self):
         self.image_output.grid_forget()
         self.close_button.place_forget()
@@ -51,7 +53,7 @@ class App(ctk.CTk):
         # Recreate the import
         self.image_import = ImageImport(self, self.import_image)
 
-    def resize_image(self, event):        
+    def resize_image(self, event):
         # Function to resize the image
         self.image_output.delete("all")
         self.image_output.create_image(event.width / 2, event.height / 2, image=self.image_tk)
@@ -78,9 +80,14 @@ class App(ctk.CTk):
         self.image_tk = ImageTk.PhotoImage(self.image)
         self.image_output.create_image(self.image_output.winfo_width()/2, self.image_output.winfo_height()/2, image=self.image_tk)
 
+        # Calculate PSNR value
+        psnr_value = calculate_psnr(self.image_path, embedded_image_path)
+
+        # Update PSNR in the Statistics tab
+        if self.statistics_frame is not None:
+            self.statistics_frame.update_psnr(psnr_value)
 
     def submit_decryption(self, encrypted_image_path, key, block_size, data_hiding_key):
-        # Decrypt the image
         decrypted_image_path = "decrypted_image.tiff"
         output_image_path = "output_image_with_extracted_data.tiff"
         key_bytes = key.encode('utf-8')
@@ -99,54 +106,12 @@ class App(ctk.CTk):
         self.decrypted_message_label = Label(self, text=f"Extracted Message: {extracted_message}", font=("Helvetica", 12))
         self.decrypted_message_label.grid(row=1, column=1, pady=20)
 
-    def show_statistics(self):
-        """
-        Function to calculate and display the PSNR and BER values
-        """
-        # Use the same image for PSNR/BER calculation
-        block_sizes = [4, 8, 16, 32, 64]
-        data_hiding_key = 1234
-        key = b'pzkUHwYaLVLml0hh'
-        secret_data = 'Secret'
-        output_path = 'recovered_image.tiff'
-
-        # Run the experiment using the user's selected image
-        block_sizes, ber_values = run_experiment(self.image_path, output_path, secret_data, key, block_sizes, data_hiding_key)
-
-        # Calculate PSNR
-        psnr_value = calculate_psnr(self.image_path, "decrypted_image.tiff")
-
-        # Display the PSNR and BER values
-        self.psnr_label = Label(self, text=f"PSNR: {psnr_value:.2f} dB", font=("Helvetica", 12))
-        self.psnr_label.grid(row=2, column=1, pady=10)
-
-        # Display BER for block size 32
-        ber_value = ber_values[block_sizes.index(32)]
-        self.ber_label = Label(self, text=f"BER for block size 32: {ber_value:.2f}%", font=("Helvetica", 12))
-        self.ber_label.grid(row=3, column=1, pady=10)
-
-        # Plot BER graph
-        self.plot_ber_graph(block_sizes, ber_values)
-
-    def plot_ber_graph(self, block_sizes, ber_values):
-        """
-        Plot BER graph and show it in the Statistics tab
-        """
-        fig, ax = plt.subplots()
-        ax.plot(block_sizes, ber_values, marker='o', label='BER')
-
-        ax.set_title('Extracted-Bit Error Rate with Respect to Block Sizes')
-        ax.set_xlabel('Block Size')
-        ax.set_ylabel('Extracted-bit Error Rate (%)')
-        ax.grid(True)
-
-        # Create a canvas for the plot
-        canvas = FigureCanvasTkAgg(fig, master=self)
-        canvas.draw()
-        canvas.get_tk_widget().grid(row=4, column=1, pady=20)
+        # Pass paths for statistics update
+        if self.statistics_frame:
+            self.statistics_frame.set_paths(self.image_path, decrypted_image_path)
 
 class Menu(ctk.CTkTabview):
-    def __init__(self, parent, submit_watermark_func, submit_decryption_func, show_statistics_func):
+    def __init__(self, parent, submit_watermark_func, submit_decryption_func):
         super().__init__(master=parent)
         self.grid(row=0, column=0, sticky='nsew')
 
@@ -160,7 +125,80 @@ class Menu(ctk.CTkTabview):
         # Add frames
         WatermarkingFrame(self.tab('Watermarking'), submit_watermark_func)
         DecryptionFrame(self.tab('Decryption'), submit_decryption_func)
-        StatisticsFrame(self.tab('Statistics'), show_statistics_func)  # Initialize StatisticsFrame here
+        parent.statistics_frame = StatisticsFrame(self.tab('Statistics'))
+        
+class StatisticsFrame(ctk.CTkFrame):
+    def __init__(self, parent):
+        super().__init__(master=parent)
+        self.pack(expand=True, fill='both')
+        self.original_image_path = None
+        self.decrypted_image_path = None
+
+        # PSNR and BER labels
+        self.psnr_label = ctk.CTkLabel(self, text="PSNR: N/A", font=("Helvetica", 12))
+        self.psnr_label.pack(pady=10)
+
+        self.ber_label = ctk.CTkLabel(self, text="BER: N/A", font=("Helvetica", 12))
+        self.ber_label.pack(pady=10)
+
+        # Button to calculate and show statistics
+        self.stat_button = ctk.CTkButton(self, text="Calculate Statistics", command=self.calculate_and_show_statistics)
+        self.stat_button.pack(pady=20)
+
+        # Placeholder for the graph
+        self.canvas = None
+
+    # Add this method to set the paths
+    def set_paths(self, original_image_path, decrypted_image_path):
+        self.original_image_path = original_image_path
+        self.decrypted_image_path = decrypted_image_path
+
+    def calculate_and_show_statistics(self):
+        if self.original_image_path is None or self.decrypted_image_path is None:
+            print("Error: Image paths not set!")
+            return
+
+        # Sample Parameters
+        block_sizes = [4, 8, 16, 32, 64]
+        data_hiding_key = 1234
+        key = b'pzkUHwYaLVLml0hh'
+        secret_data = 'Secret'
+        output_path = 'recovered_image.tiff'
+
+        # Call run_experiment to calculate PSNR and BER
+        block_sizes, ber_values = run_experiment(self.original_image_path, output_path, secret_data, key, block_sizes, data_hiding_key)
+
+        # Calculate and show PSNR
+        psnr_value = calculate_psnr(self.original_image_path, self.decrypted_image_path)
+        self.psnr_label.configure(text=f"PSNR: {psnr_value:.2f} dB")
+
+        # Update BER value (for block size 32 as an example)
+        ber_value = ber_values[block_sizes.index(32)]
+        self.ber_label.configure(text=f"BER: {ber_value:.2f}%")
+
+        # Plot BER graph using plot_multiple_ber
+        self.plot_ber_graph(block_sizes, [ber_values], [self.original_image_path])
+
+    def plot_ber_graph(self, block_sizes, ber_results, image_names):
+        # Create a figure and plot the BER
+        fig, ax = plt.subplots(figsize=(6, 4))
+        for ber_values, image_name in zip(ber_results, image_names):
+            ax.plot(block_sizes, ber_values, marker='o', label=image_name)
+
+        ax.set_title('Extracted-Bit Error Rate with Respect to Block Sizes')
+        ax.set_xlabel('Block Size')
+        ax.set_ylabel('Extracted-bit Error Rate (%)')
+        ax.grid(True)
+
+        # If a canvas already exists, clear it first
+        if self.canvas is not None:
+            self.canvas.get_tk_widget().destroy()
+
+        # Create a canvas for the figure
+        self.canvas = FigureCanvasTkAgg(fig, master=self)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(pady=20)
+
 
 class DecryptionFrame(ctk.CTkFrame):
     def __init__(self, parent, submit_decryption_func):
@@ -230,18 +268,6 @@ class WatermarkingFrame(ctk.CTkFrame):
         # Add submit button
         self.submit_button = ctk.CTkButton(self, text="Submit", command=lambda: submit_watermark_func(self.method_var.get(), self.text_input.get()))
         self.submit_button.pack(pady=20)
-
-class StatisticsFrame(ctk.CTkFrame):
-    def __init__(self, parent, show_statistics_func):
-        super().__init__(master=parent)
-        self.pack(expand=True, fill='both')
-
-        # Add PSNR/BER calculation button
-        self.calculate_button = ctk.CTkButton(
-            self, text="Calculate PSNR and BER",
-            command=show_statistics_func
-        )
-        self.calculate_button.pack(pady=20)
 
 
 if __name__ == "__main__":
