@@ -35,8 +35,11 @@ def encrypt_image(input_image_path, output_image_path, key):
         raise ValueError("Key must be 16 bytes (128 bits) long.")
     
     # Import an image from directory
-    input_image = Image.open("reversible-data-hiding\\" + input_image_path)
+    input_image_full_path = os.path.join("reversible-data-hiding", input_image_path)
+    output_image_full_path = os.path.join("reversible-data-hiding", output_image_path)
     
+    # Import an image from directory
+    input_image = Image.open(input_image_full_path)    
     # Extracting the width and height of the image
     width, height = input_image.size
     
@@ -74,21 +77,5 @@ def encrypt_image(input_image_path, output_image_path, key):
             pixel_map[i, j] = int(after_encryption_pixel_value)
     
     # Saving the final output
-    encrypted_image.save("reversible-data-hiding\\" + output_image_path, format="tiff")
+    encrypted_image.save(output_image_full_path, format="tiff")
     
-    # Show encrypted version of image
-    # encrypted_image.show()
-
-# key = b'pzkUHwYaLVLml0hh' 
-# image_names = ["lena.tiff", "lake.tiff", "man.tiff", "baboon.tiff"]
-
-# # Encryption key
-# key = b'pzkUHwYaLVLml0hh'
-
-# # Loop through each image, encrypt it, and save the output
-# for image_name in image_names:
-#     input_image_path = os.path.join(os.getcwd(), image_name)
-#     output_image_path = f"encrypted_{image_name}"
-#     print(f"Encrypting {image_name}...")
-#     encrypt_image(input_image_path, output_image_path, key)
-#     print(f"Saved encrypted image as {output_image_path}")

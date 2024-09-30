@@ -22,31 +22,6 @@
 #     psnr = 10 * np.log10(255 * 255 / mse)
 #     return psnr
 
-def calculate_ber(original_image_path, decrypted_image_path):
-    original = Image.open(original_image_path).convert('L')
-    decrypted = Image.open(decrypted_image_path).convert('L')
-    
-    # Convert images to numpy arrays
-    original_array = np.array(original)
-    decrypted_array = np.array(decrypted)
-    
-    # Ensure images are the same size
-    assert original_array.shape == decrypted_array.shape, "Images must be of the same size"
-    
-    # Flatten the arrays to 1D
-    original_bits = np.unpackbits(original_array.flatten())
-    decrypted_bits = np.unpackbits(decrypted_array.flatten())
-    
-    # Calculate the number of bit errors
-    bit_errors = np.sum(original_bits != decrypted_bits)
-    
-    # Calculate the total number of bits
-    total_bits = original_bits.size
-    
-    # Calculate BER
-    ber = bit_errors / total_bits
-    
-    return ber
 
 # # Example usage:
 # psnr_value = calculate_psnr("7.1.07.tiff", "decrypted_image2.tiff")
@@ -70,15 +45,7 @@ def calculate_ber(original_image_path, decrypted_image_path):
 # plt.ylabel('PSNR (dB)')
 # plt.grid(True)
 
-# # Plotting BER
-# plt.subplot(2, 1, 2)
-# plt.plot(conditions, ber_values, marker='o', color='red')
-# plt.ylabel('Bit Error Rate (BER)')
-# plt.xlabel('Conditions')
-# plt.grid(True)
 
-# plt.tight_layout()
-# plt.show()
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt

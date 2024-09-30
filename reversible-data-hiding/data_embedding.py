@@ -1,10 +1,14 @@
 import random
 from PIL import Image
+import os
 
 def data_embedding_paper(image_path, secret_data, output_path, block_size, data_hiding_key=1234):
     # Load the encrypted image
     secret_data = secret_data + "***"
-    image = Image.open("reversible-data-hiding\\" + image_path).convert('L')
+    image_full_path = os.path.join("reversible-data-hiding", image_path)
+    output_full_path = os.path.join("reversible-data-hiding", output_path)
+    
+    image = Image.open(image_full_path).convert('L')    
     pixel_map = image.load()
     width, height = image.size
     
@@ -54,9 +58,9 @@ def data_embedding_paper(image_path, secret_data, output_path, block_size, data_
                 index += 1
 
     # Save the image with embedded data
-    image.save("reversible-data-hiding\\" + output_path)
-    image.show()
+    image.save(output_full_path)
+    # image.show()
     
 
 # Example usage:
-data_embedding_paper('encrypted_image.tiff', 'Secret', 'embedded_image123.tiff', block_size=32, data_hiding_key=1234)
+# data_embedding_paper('encrypted_image.tiff', 'Secret', 'embedded_image123.tiff', block_size=32, data_hiding_key=1234)
