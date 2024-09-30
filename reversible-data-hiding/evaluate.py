@@ -1,61 +1,35 @@
-# import numpy as np
-# from PIL import Image
-# import matplotlib.pyplot as plt
-# import random
-# from PIL import Image, ImageDraw
-
-
-# def calculate_psnr(original_image_path, decrypted_image_path):
-#     original = Image.open(original_image_path).convert('L')
-#     decrypted = Image.open(decrypted_image_path).convert('L')
-
-#     # Convert images to numpy arrays
-#     original_array = np.array(original)
-#     decrypted_array = np.array(decrypted)
-
-#     # Calculate the mean squared error (MSE)
-#     mse = np.mean((original_array - decrypted_array) ** 2)
-
-#     # Calculate the PSNR
-#     if mse == 0:
-#         return float('inf')
-#     psnr = 10 * np.log10(255 * 255 / mse)
-#     return psnr
-
-
-# # Example usage:
-# psnr_value = calculate_psnr("7.1.07.tiff", "decrypted_image2.tiff")
-# ber_value = calculate_ber("7.1.07.tiff", "decrypted_image2.tiff")
-
-# print("PSNR:", psnr_value)
-# print("Bit Error Rate (BER):", ber_value)
-
-
-# # Assuming you have the PSNR and BER values for different scenarios
-# # Here we'll use the values calculated above
-# psnr_values = [psnr_value]  # Add more values if you test different conditions
-# ber_values = [ber_value]  # Add more values if you test different conditions
-# conditions = ['Condition 1']  # Describe the condition (e.g., "No noise", "With noise", etc.)
-
-# Plotting PSNR
-# plt.figure(figsize=(10, 6))
-# plt.subplot(2, 1, 1)
-# plt.plot(conditions, psnr_values, marker='o', color='blue')
-# plt.title('PSNR and Bit Error Rate Analysis')
-# plt.ylabel('PSNR (dB)')
-# plt.grid(True)
-
-
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
 from image_encryption import encrypt_image  # Assuming encryption function is in image_encryption2
 from data_embedding import data_embedding_paper
 from ch_data_extraction_ver1 import decrypt_image, data_extraction, calculate_ber, plot_ber_vs_block_size
+import os
+
+def calculate_psnr(original_image_path, decrypted_image_path):
+    original_image = os.path.join("reversible-data-hiding", original_image_path)
+    decrypted_image = os.path.join("reversible-data-hiding", decrypted_image_path)
+
+    original = Image.open(original_image).convert('L')
+    decrypted = Image.open(decrypted_image).convert('L')
+
+    # Convert images to numpy arrays
+    original_array = np.array(original)
+    decrypted_array = np.array(decrypted)
+
+    # Calculate the mean squared error (MSE)
+    mse = np.mean((original_array - decrypted_array) ** 2)
+
+    # Calculate the PSNR
+    if mse == 0:
+        return float('inf')
+    psnr = 10 * np.log10(255 * 255 / mse)
+    return psnr
 
 def run_experiment(image_path, output_path, secret_data, key, block_sizes, data_hiding_key=1234):
     ber_values = []
-    
+    incorrect_blocks_per_blocksize = []
+
     for block_size in block_sizes:
         print(f"Running for block size: {block_size} on {image_path}")
         encrypted_image_path = f"encrypted_{image_path}"
@@ -76,11 +50,18 @@ def run_experiment(image_path, output_path, secret_data, key, block_sizes, data_
         
         # Convert the original secret data to binary for comparison
         original_bits = ''.join(format(byte, '08b') for byte in bytearray(secret_data, encoding='utf-8'))
-        
+
         # Calculate BER
         ber = calculate_ber(extracted_bits, original_bits)
         ber_values.append(ber*100)  # Convert to percentage for visualization (similar to the paper)
         print(f"BER for block size {block_size}: {ber}%")
+        
+        # PSNR Calculation
+        psnr_value = calculate_psnr(image_path, decrypted_image_path)
+        print(f"PSNR for block size {block_size}: {psnr_value:.2f} dB")
+
+        # Visualize incorrect blocks
+        image_shape = Image.open(image_path).size  # Get the image size
 
     return block_sizes, ber_values
 
@@ -97,25 +78,28 @@ def plot_multiple_ber(block_sizes, ber_results, image_names):
     plt.grid(True)
     plt.show()
 
-# Main function to test multiple images
+
 if __name__ == "__main__":
     block_sizes = [4, 8, 16, 32, 64]  # Different block sizes to test
     data_hiding_key = 1234
     key = b'pzkUHwYaLVLml0hh'
     secret_data = 'SecretSe'
     output_path = 'recovered_image.tiff'
-    
+        
     # Image paths
-    # images = ['lena.tiff', 'lake.tiff', 'man.tiff', 'baboon.tiff']
     ber_results = []
-    image = 'lena.tiff'
+    image = 'lena.tiff'  # This is the original image input from the user
     block_sizes, ber_values = run_experiment(image, output_path, secret_data, key, block_sizes, data_hiding_key)
     ber_results.append(ber_values)
-    
-    # # Run the experiment for each image
-    # for image_path in image:
-    #     block_sizes, ber_values = run_experiment(image_path, output_path, secret_data, key, block_sizes, data_hiding_key)
-    #     ber_results.append(ber_values)
-    
-    # Plot the BER results for all images
-    plot_multiple_ber(block_sizes, ber_results, image)
+
+    plot_multiple_ber(block_sizes, ber_results, [image])
+
+        # Image paths
+        # images = ['lena.tiff', 'lake.tiff', 'man.tiff', 'baboon.tiff']
+        # # Run the experiment for each image
+        # for image_path in image:
+        #     block_sizes, ber_values = run_experiment(image_path, output_path, secret_data, key, block_sizes, data_hiding_key)
+        #     ber_results.append(ber_values)
+
+        # Plot the BER results for the image
+        # plot_multiple_ber(block_sizes, ber_results, [image])
