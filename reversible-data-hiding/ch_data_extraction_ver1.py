@@ -159,7 +159,7 @@ def data_extraction(image_path, output_path, block_size, data_hiding_key):
     for character in decoded_embedded_message:
         message += character
         if counter == 3:
-            returned_data = message[:-3]
+            returned_data = message[:-4]
             break
 
 
@@ -203,8 +203,8 @@ def plot_ber_vs_block_size(block_sizes, ber_values):
     plt.grid(True)
     plt.show()
     
-# data_hiding_key = 1234
-# key = b'pzkUHwYaLVLml0hh'
-# decrypt_image("embedded_image123.tiff", "decrypted_image2.tiff", key)
-# print(data_extraction("decrypted_image2.tiff", "recovered_image.tiff", block_size=32, data_hiding_key=data_hiding_key))
+data_hiding_key = 1234
+key = b'pzkUHwYaLVLml0hh'
+decrypt_image("embedded_image123.tiff", "decrypted_image2.tiff", key)
+print(data_extraction("decrypted_image2.tiff", "recovered_image.tiff", block_size=32, data_hiding_key=data_hiding_key))
 
