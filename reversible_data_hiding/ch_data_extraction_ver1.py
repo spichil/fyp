@@ -95,46 +95,61 @@ def data_extraction(image_path, output_path, block_size, data_hiding_key):
     h1_image = image.copy()
     h1_pixelmap = h1_image.load()
 
-    # Segment image into non-overlapping blocks
+    # Segmentation of encrypted image into non-overlapping blocks
     for i in range(0, width, block_size):
         for j in range(0, height, block_size):
-            block_pixels = [(i + m, j + n) for m in range(block_size) for n in range(block_size) 
-                            if i + m < width and j + n < height]
-
+            # if index < len(binary_data):
+            #     # Each block will be used to carry one additional bit
+            block_pixels = []
+            for m in range(block_size):
+                for n in range(block_size):
+                    if i + m < width and j + n < height:
+                        block_pixels.append((i + m, j + n))
+                
             # Pseudo-randomly divide pixels into two sets (Set A and Set B)
-            set_A, set_B = [], []
+            set_A = []
+            set_B = []
             for pixel in block_pixels:
                 if random.random() < 0.5:
                     set_A.append(pixel)
                 else:
                     set_B.append(pixel)
-
-            # Flip LSB of pixels in Set A, then update the pixels in h0
+            
+            # for every block, flip LSB of pixels in Set A, then replace the pixels in h0
             for pixel in set_A:
                 pixel_value = pixel_map[pixel]
                 pixel_bin = format(pixel_value, '08b')
-                new_pixel_bin = pixel_bin[:-1] + ('1' if pixel_bin[-1] == '0' else '0')
+                new_pixel_bin = pixel_bin[:-3] + ''.join(['1' if b == '0' else '0' for b in pixel_bin[-3:]])
                 h0_pixelmap[pixel] = int(new_pixel_bin, 2)
 
-            # Flip LSB of pixels in Set B, then update the pixels in h1
+            # for every block, flip LSB of pixels in Set B, then replace the pixels in h1
             for pixel in set_B:
                 pixel_value = pixel_map[pixel]
                 pixel_bin = format(pixel_value, '08b')
-                new_pixel_bin = pixel_bin[:-1] + ('1' if pixel_bin[-1] == '0' else '0')
+                new_pixel_bin = pixel_bin[:-3] + ''.join(['1' if b == '0' else '0' for b in pixel_bin[-3:]])
                 h1_pixelmap[pixel] = int(new_pixel_bin, 2)
 
-            # Compare spatial correlation to determine most correct block
-            h0_fluc = fluctuation_calculation(h0_image, block_size, i, j)
-            h1_fluc = fluctuation_calculation(h1_image, block_size, i, j)
+            # compare spatial correlation to determine most correct block
+            h0_fluc = fluctuation_calculation(h0_image,block_size=block_size,i=i,j=j)
+            h1_fluc = fluctuation_calculation(h1_image,block_size=block_size,i=i,j=j)
 
-            # Compare fluctuations: lower fluctuation = closer to original
+            # compare fluctuations of both blocks, lower fluctuation = closer to original = considered as original 
+            # embedded bit will be 0 if h0_fluc is lower, 1 if h1_fluc is lower
             if h0_fluc < h1_fluc:
-                embedded_bits += "0"
+                for pixel in set_A:
+                    pixel_value = pixel_map[pixel]
+                    pixel_bin = format(pixel_value, '08b')
+                    new_pixel_bin = pixel_bin[:-3] + ''.join(['1' if b == '0' else '0' for b in pixel_bin[-3:]])
+                    pixel_map[pixel] = int(new_pixel_bin, 2)
+                embedded_bits = embedded_bits + "0"
             else:
-                embedded_bits += "1"
+                for pixel in set_B:
+                    pixel_value = pixel_map[pixel]
+                    pixel_bin = format(pixel_value, '08b')
+                    new_pixel_bin = pixel_bin[:-3] + ''.join(['1' if b == '0' else '0' for b in pixel_bin[-3:]])
+                    pixel_map[pixel] = int(new_pixel_bin, 2)
+                embedded_bits = embedded_bits + "1"
 
-    # Add a more robust termination check here. 
-    # Example: Look for '***' as a message end marker and return the message before it
     decoded_embedded_message = decode_binary_string(embedded_bits)
 
     counter = 0
@@ -142,7 +157,7 @@ def data_extraction(image_path, output_path, block_size, data_hiding_key):
     for character in decoded_embedded_message:
         message += character
         if counter == 3:
-            returned_data = message[:-3]
+            returned_data = message[:-4]
             break
 
 
@@ -158,13 +173,13 @@ def data_extraction(image_path, output_path, block_size, data_hiding_key):
     # image.show()
 
     #print(decoded_embedded_message)
-    #return returned_data
-    return decoded_embedded_message
+    return returned_data
+    #return decoded_embedded_message
 
 
-def decode_binary_string(s):
-    """Converts a binary string back to a readable string"""
-    return ''.join(chr(int(s[i * 8: i * 8 + 8], 2)) for i in range(len(s) // 8))
+# def decode_binary_string(s):
+#     """Converts a binary string back to a readable string"""
+#     return ''.join(chr(int(s[i * 8: i * 8 + 8], 2)) for i in range(len(s) // 8))
         
 def decode_binary_string(s):
     return ''.join(chr(int(s[i*8:i*8+8],2)) for i in range(len(s)//8))
