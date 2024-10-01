@@ -76,6 +76,7 @@ def data_extraction(image_path, output_path, block_size, data_hiding_key):
         7. Steps 3-6 are repeated for every block within the image.
     """
     embedded_bits = ""
+    returned_data = ""
     
     # Load the decrypted image
     image_full_path = os.path.abspath(image_path)
@@ -132,8 +133,6 @@ def data_extraction(image_path, output_path, block_size, data_hiding_key):
             else:
                 embedded_bits += "1"
 
-    decoded_embedded_message = decode_binary_string(embedded_bits)
-
     # Add a more robust termination check here. 
     # Example: Look for '***' as a message end marker and return the message before it
     decoded_embedded_message = decode_binary_string(embedded_bits)
@@ -158,7 +157,8 @@ def data_extraction(image_path, output_path, block_size, data_hiding_key):
     image.save(output_full_path)
     # image.show()
 
-    print(decoded_embedded_message)
+    #print(decoded_embedded_message)
+    #return returned_data
     return decoded_embedded_message
 
 

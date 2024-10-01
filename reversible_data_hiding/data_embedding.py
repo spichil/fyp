@@ -3,6 +3,7 @@ from PIL import Image
 
 def data_embedding_paper(image_path, secret_data, output_path, block_size, data_hiding_key=1234):
     # Load the encrypted image
+    secret_data = secret_data + "***"
     image = Image.open(image_path).convert('L')
     pixel_map = image.load()
     width, height = image.size
