@@ -9,6 +9,7 @@ from reversible_data_hiding.data_embedding import data_embedding_paper
 from reversible_data_hiding.ch_data_extraction_ver1 import decrypt_image, data_extraction
 from reversible_data_hiding.evaluate import calculate_psnr, run_experiment
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from tkinter import messagebox
 
 class App(ctk.CTk):
     def __init__(self):
@@ -40,16 +41,30 @@ class App(ctk.CTk):
 
     def import_image(self, path):
         self.image_path = path  # Store image path
-        self.image = Image.open(path)
-        self.image_tk = ImageTk.PhotoImage(self.image)
+        
+        # Get the file extension and check if it's supported
+        supported_formats = ['tiff']
+        file_extension = path.split('.')[-1].lower()
 
-        # Clear grid and add output and close button
-        self.image_import.grid_forget()
-        self.image_output = ImageOutput(self, self.resize_image)
-        self.close_button = CloseOutput(self, self.close_edit)
+        if file_extension not in supported_formats:
+            self.show_error_message("Unsupported format. Please use .tiff")
+            return  # Stop further processing
 
-        # Menu for settings
-        self.menu = Menu(self, self.submit_watermark, self.submit_decryption)
+        try:
+            self.image = Image.open(path)
+            self.image_tk = ImageTk.PhotoImage(self.image)
+
+            # Clear grid and add output and close button
+            self.image_import.grid_forget()
+            self.image_output = ImageOutput(self, self.resize_image)
+            self.close_button = CloseOutput(self, self.close_edit)
+
+            # Menu for settings
+            self.menu = Menu(self, self.submit_watermark, self.submit_decryption)
+        
+        except Exception as e:
+            self.show_error_message(f"Failed to load image: {str(e)}")
+
 
     def close_edit(self):
         self.image_output.grid_forget()
@@ -63,55 +78,103 @@ class App(ctk.CTk):
         self.image_output.delete("all")
         self.image_output.create_image(event.width / 2, event.height / 2, image=self.image_tk)
 
+    def show_error_message(self, message):
+        """
+        Display an error message to the user in a popup.
+        """
+        messagebox.showerror("Error", message)
+        
     def submit_watermark(self, algorithm, watermark_text, data_hiding_key, key):
         """
         Handle encryption and watermark embedding based on the user's input.
         """
-        encrypted_image_path = "encrypted_image.tiff"
-        embedded_image_path = "embedded_image.tiff"
-        self.key = key.encode('utf-8')  # Convert the key to bytes
-        self.block_size = 32
-        self.data_hiding_key = int(data_hiding_key)
-        self.secret_data = watermark_text
+        try:
+            # Ensure the image is in a supported format
+            supported_formats = ['tiff']
+            file_extension = self.image_path.split('.')[-1].lower()
 
-        # Encrypt the image
-        encrypt_image(self.image_path, encrypted_image_path, self.key)
+            if file_extension not in supported_formats:
+                raise ValueError("Unsupported format. Please use .tiff.")
 
-        # Embed the watermark text
-        data_embedding_paper(encrypted_image_path, watermark_text, embedded_image_path, self.block_size, self.data_hiding_key)
+            # Check if the key is exactly 16 bytes long
+            if len(key) != 16:
+                raise ValueError("Key must be 16 bytes (128 bits) long.")
+            
+            # Continue with the watermark embedding
+            encrypted_image_path = "encrypted_image.tiff"
+            embedded_image_path = "embedded_image.tiff"
+            self.key = key.encode('utf-8')  # Convert the key to bytes
+            self.block_size = 32
+            self.data_hiding_key = int(data_hiding_key)
+            self.secret_data = watermark_text
 
-        # Display the watermarked image
-        self.image = Image.open(embedded_image_path)
-        self.image_tk = ImageTk.PhotoImage(self.image)
-        self.image_output.create_image(self.image_output.winfo_width() / 2, self.image_output.winfo_height() / 2, image=self.image_tk)
+            # Encrypt the image
+            encrypt_image(self.image_path, encrypted_image_path, self.key)
 
-        # Update statistics tab
-        if self.statistics_frame is not None:
-            self.statistics_frame.set_inputs(self.secret_data, self.data_hiding_key, self.key)
+            # Embed the watermark text
+            data_embedding_paper(encrypted_image_path, watermark_text, embedded_image_path, self.block_size, self.data_hiding_key)
+
+            # Display the watermarked image
+            self.image = Image.open(embedded_image_path)
+            self.image_tk = ImageTk.PhotoImage(self.image)
+            self.image_output.create_image(self.image_output.winfo_width() / 2, self.image_output.winfo_height() / 2, image=self.image_tk)
+
+            # Update statistics tab
+            if self.statistics_frame is not None:
+                self.statistics_frame.set_inputs(self.secret_data, self.data_hiding_key, self.key)
+
+        except ValueError as e:
+            # Display error message for unsupported format or invalid key
+            self.show_error_message(str(e))
+        except Exception as e:
+            # Catch any other exceptions
+            self.show_error_message(f"An unexpected error occurred: {str(e)}")
+
 
     def submit_decryption(self, encrypted_image_path, key, block_size, data_hiding_key):
-        decrypted_image_path = "decrypted_image.tiff"
-        output_image_path = "output_image_with_extracted_data.tiff"
-        self.key = key.encode('utf-8')
-        self.block_size = block_size
-        self.data_hiding_key = int(data_hiding_key)
+        try:
+            # Ensure the image is in a supported format
+            supported_formats = ['tiff']
+            file_extension = self.image_path.split('.')[-1].lower()
 
-        # Decrypt the image and extract watermark
-        decrypt_image(encrypted_image_path, decrypted_image_path, self.key)
-        extracted_message = data_extraction(decrypted_image_path, output_image_path, self.block_size, self.data_hiding_key)
+            if file_extension not in supported_formats:
+                raise ValueError("Unsupported format. Please use .tiff.")
 
-        # Display the decrypted image
-        self.image = Image.open(output_image_path)
-        self.image_tk = ImageTk.PhotoImage(self.image)
-        self.image_output.create_image(self.image_output.winfo_width() / 2, self.image_output.winfo_height() / 2, image=self.image_tk)
+            # Check if the key is exactly 16 bytes long
+            if len(key) != 16:
+                raise ValueError("Key must be 16 bytes (128 bits) long.")
+            
+            # Continue with decryption
+            decrypted_image_path = "decrypted_image.tiff"
+            output_image_path = "output_image_with_extracted_data.tiff"
+            self.key = key.encode('utf-8')
+            self.block_size = block_size
+            self.data_hiding_key = int(data_hiding_key)
 
-        # Show extracted watermark message
-        self.decrypted_message_label = Label(self, text=f"Extracted Message: {extracted_message}", font=("Helvetica", 12))
-        self.decrypted_message_label.grid(row=1, column=1, pady=20)
+            # Decrypt the image and extract watermark
+            decrypt_image(encrypted_image_path, decrypted_image_path, self.key)
+            extracted_message = data_extraction(decrypted_image_path, output_image_path, self.block_size, self.data_hiding_key)
 
-        # Pass paths for statistics update
-        if self.statistics_frame:
-            self.statistics_frame.set_paths(self.image_path, decrypted_image_path)
+            # Display the decrypted image
+            self.image = Image.open(output_image_path)
+            self.image_tk = ImageTk.PhotoImage(self.image)
+            self.image_output.create_image(self.image_output.winfo_width() / 2, self.image_output.winfo_height() / 2, image=self.image_tk)
+
+            # Show extracted watermark message
+            self.decrypted_message_label = Label(self, text=f"Extracted Message: {extracted_message}", font=("Helvetica", 12))
+            self.decrypted_message_label.grid(row=1, column=1, pady=20)
+
+            # Pass paths for statistics update
+            if self.statistics_frame:
+                self.statistics_frame.set_paths(self.image_path, decrypted_image_path)
+
+        except ValueError as e:
+            # Display error message for unsupported format or invalid key
+            self.show_error_message(str(e))
+        except Exception as e:
+            # Catch any other exceptions
+            self.show_error_message(f"An unexpected error occurred: {str(e)}")
+
 
 class Menu(ctk.CTkTabview):
     def __init__(self, parent, submit_watermark_func, submit_decryption_func):
