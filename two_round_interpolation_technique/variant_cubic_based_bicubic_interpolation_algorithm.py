@@ -3,7 +3,7 @@ import numpy as np
 import math
 import random
 
-def cubic_based_bicubic_interpolation_algorithm(image_path):
+def cubic_based_bicubic_interpolation_algorithm(input_image: Image, group):
     """
     Prediction algorithm for set B.
     Set is divided into 2 subcategories: adjacent to boundary and non-adjacent
@@ -12,16 +12,14 @@ def cubic_based_bicubic_interpolation_algorithm(image_path):
     """
 
     # Load the decrypted image
-    image = Image.open(image_path).convert('L')
-    pixel_map = image.load()
-    width, height = image.size
-    set_b = []
+    pixel_map = input_image.load()
+    width, height = input_image.size
 
-    for m in range((height/2) - 1):
-        for n in range((width/2)-1):
-            set_b.append((2*m,2*n))
+    # for m in range((height/2) - 1):
+    #     for n in range((width/2)-1):
+    #         set_b.append((2*m,2*n))
 
-    for pixel in set_b:
+    for pixel in group:
         if pixel[0] == 1:
             resulting_pixel = (pixel_map[pixel[0]-1,pixel[1]-1] +
                                pixel_map[pixel[0]-1,pixel[1]+1] + 
@@ -70,7 +68,9 @@ def cubic_based_bicubic_interpolation_algorithm(image_path):
                                                          (pixel_map[pixel[0]+1,pixel[1]+1]) +
                                                          (pixel_map[pixel[0]-1,pixel[1]+1])))
             
-        pixel_map[pixel[0],pixel[1]] = resulting_pixel
+    return resulting_pixel
+
+
             
 
     
