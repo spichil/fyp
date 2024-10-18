@@ -51,7 +51,7 @@ def parabolic_interpolation_algorithm(input_image: Image, group):
                                                 (pixel_map[pixel[0]+1,pixel[1]])+
                                                 (pixel_map[pixel[0]+1,pixel[1]+2]/root_5))/((4/root_5)+2)
                 
-                pixel_map(pixel[0],pixel[1]) = resulting_pixel
+                pixel_map[pixel[0],pixel[1]] = resulting_pixel
 
             if pixel[1] == height-2:
                 k = 0.1 #[0.1,0.2,0.3...1]
