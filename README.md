@@ -27,6 +27,7 @@ UI branch로 이동 후 python main.py
 
 ### 사용 방법
 1. 워터마크 삽입
+#### <img width="529" alt="Screenshot 2025-03-11 at 2 06 54 PM" src="https://github.com/user-attachments/assets/a76f6022-49dd-4ed3-87ff-e3d10693dbc8" />
 - 이미지 불러오기: Open Image 버튼을 눌러 .tiff 이미지를 선택
 - 워터마킹 알고리즘 선택: 드롭다운 메뉴에서 알고리즘 선택
 - 워터마크 텍스트 입력: 워터마크로 삽입할 텍스트 입력
@@ -34,6 +35,7 @@ UI branch로 이동 후 python main.py
 - 암호화 키 입력: 16바이트 길이의 암호화 키 입력
 - 삽입 실행: Submit 버튼을 눌러 워터마크 삽입
 - 결과 확인: 삽입된 워터마크 이미지가 embedded_image.tiff로 저장
+#### <img width="528" alt="Screenshot 2025-03-11 at 2 02 30 PM" src="https://github.com/user-attachments/assets/143c584f-977b-4013-a6a2-1d59294a49cd" />
 
 2. 워터마크 복구 및 제거
 - 암호화된 이미지 불러오기
@@ -45,9 +47,13 @@ Decryption 탭에서 .tiff 이미지를 선택
 원래 사용한 값과 동일해야 정확한 워터마크 복구 가능
 - 복호화 실행
 Decrypt 버튼 클릭 후 원본 이미지 및 텍스트 확인
+#### <img width="214" alt="Screenshot 2025-03-11 at 2 02 59 PM" src="https://github.com/user-attachments/assets/5b7dfe4b-4de5-4885-9bf9-75253b56946e" />
+#### <img width="449" alt="Screenshot 2025-03-11 at 2 03 56 PM" src="https://github.com/user-attachments/assets/44e253d0-eacc-45dd-a3dd-093f09ff3528" />
 
 3. 성능 평가
 워터마크 제거 후 Calculate Statistics 버튼을 눌러 PSNR, BER 등의 성능 지표를 확인할 수 있습니다.
+#### <img width="366" alt="Screenshot 2025-03-11 at 2 04 09 PM" src="https://github.com/user-attachments/assets/958377db-2bdd-486e-a187-c85a2aa50097" />
+
 
 주의: 여러 블록 크기에서 반복 계산이 수행되므로 최대 15초가 소요될 수 있습니다.
 
