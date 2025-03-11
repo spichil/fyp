@@ -21,7 +21,7 @@
 1. 애플리케이션을 실행하기 위해 필요한 라이브러리를 설치합니다.
 pip install -r requirements.txt
 2. 프로그램 실행
-python main.py
+UI branch로 이동 후 python main.py
 3. 이미지 포맷
 본 애플리케이션은 .tiff 형식의 이미지를 지원합니다. 다른 형식의 이미지는 .tiff로 변환 후 사용해야 합니다.
 
